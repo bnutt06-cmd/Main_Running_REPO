@@ -302,6 +302,9 @@ body {
   color: var(--muted); margin-bottom: 8px;
 }
 .elev-chart-wrap { background: var(--bg); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px; }
+.elev-canvas-wrap { position: relative; height: 120px; }
+.elev-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 12px; }
+.elev-chart-wrap canvas { max-height: 120px !important; }
 .elev-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 12px; }
 .elev-stat { text-align: center; }
 .elev-stat-val { font-size: 16px; font-weight: 800; color: var(--text); }
@@ -2372,7 +2375,7 @@ async function openRaceModal(race) {
         <div id="raceMap" class="race-modal-map"></div>
         <div id="raceElevChart" class="elev-chart-wrap" style="display:none">
           <div id="elevStats" class="elev-stats"></div>
-          <canvas id="elevCanvas" height="120"></canvas>
+        <div class="elev-canvas-wrap"><canvas id="elevCanvas"></canvas></div>
         </div>
       </div>
       <div class="race-modal-section">
