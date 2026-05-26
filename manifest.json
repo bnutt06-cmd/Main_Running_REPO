@@ -1,0 +1,18 @@
+{
+  "name": "Ben's Training Plan",
+  "short_name": "Ben's Plan",
+  "description": "Training dashboard by Unleashed Run Coaching",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F5F7",
+  "theme_color": "#E8614A",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23E8614A'/><text y='.9em' font-size='80' x='10'>🐾</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
