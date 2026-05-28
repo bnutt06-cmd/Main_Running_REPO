@@ -2352,7 +2352,6 @@ function appendCompletedRow(parentEl, race, i, pal) {
     : '';
   const row = document.createElement('div');
   row.className = 'completed-race-row';
-  const safeName = race.name.replace(/\/g,'\\').replace(/'/g,"\'");
   row.innerHTML = `
     <div class="completed-race-summary" onclick="toggleCompletedRace(${i})">
       <div class="completed-race-dot" style="background:linear-gradient(135deg,${pal.grad})">🏅</div>
@@ -2368,12 +2367,15 @@ function appendCompletedRow(parentEl, race, i, pal) {
     <div class="completed-race-detail" id="detail-${i}">
       <div style="padding-top:14px;display:flex;flex-direction:column;gap:10px">
         ${race.notes ? `<div style="font-size:13px;color:var(--text2);font-style:italic;line-height:1.5">${race.notes}</div>` : ''}
-        <button onclick="openRaceModal(racesData.find(r=>r.name==='${safeName}'))"
+        <button class="completed-race-view-btn"
           style="align-self:flex-start;background:${race.gpxId ? 'var(--coral)' : 'var(--purple)'};color:white;border:none;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">
           ${race.gpxId ? 'View Route & Details' : 'View Details'}
         </button>
       </div>
     </div>`;
+  // Attach the handler directly so we don't have to escape the race name into a string
+  const btn = row.querySelector('.completed-race-view-btn');
+  if (btn) btn.addEventListener('click', () => openRaceModal(race));
   parentEl.appendChild(row);
 }
 
