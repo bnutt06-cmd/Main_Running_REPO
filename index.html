@@ -488,7 +488,7 @@ body {
 .strava-connect-btn:hover { background: #fff5f0; transform: scale(1.02); }
 
 /* RACE CARDS */
-.races-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+.races-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; align-items: start; }
 @media (max-width:640px) { .races-grid { grid-template-columns: 1fr; } }
 
 .race-card {
@@ -498,49 +498,85 @@ body {
   box-shadow: var(--shadow);
   overflow: hidden;
   transition: var(--transition);
+  display: flex; flex-direction: column;
 }
 .race-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 
+/* Fixed-height header so all cards line up */
 .race-card-header {
-  padding: 20px 22px 16px;
+  padding: 0;
   position: relative;
   overflow: hidden;
+  height: 130px;
+  flex-shrink: 0;
 }
-.race-card-header::before {
-  content: '';
+/* Photo fills the header, gradient overlaid on top for legibility */
+.race-card-header-bg {
   position: absolute; inset: 0;
-  opacity: 0.08;
-  background: repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 0, transparent 50%);
-  background-size: 8px 8px;
+  background-size: cover; background-position: center;
+  transition: opacity 0.4s ease;
 }
-.race-name { font-size: 18px; font-weight: 800; color: white; margin-bottom: 4px; position: relative; }
-.race-date-loc { font-size: 12px; color: rgba(255,255,255,0.8); position: relative; }
+.race-card-header-overlay {
+  position: absolute; inset: 0;
+}
+.race-card-header-text {
+  position: relative; z-index: 2;
+  padding: 18px 20px 14px;
+  height: 100%; display: flex; flex-direction: column; justify-content: flex-end;
+}
+.race-name { font-size: 17px; font-weight: 800; color: white; margin-bottom: 3px; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+.race-date-loc { font-size: 11px; color: rgba(255,255,255,0.85); text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
 
-.race-card-body { padding: 16px 22px; }
+/* Fixed-height body so all cards are identical */
+.race-card-body { padding: 14px 18px 16px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
 
 .race-stats-row {
   display: grid; grid-template-columns: repeat(3,1fr);
-  gap: 12px; margin-bottom: 14px;
+  gap: 8px;
 }
-.race-stat { text-align: center; }
-.race-stat-val { font-size: 18px; font-weight: 800; color: var(--text); line-height: 1; }
-.race-stat-lbl { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
-
-.race-goal-bar {
-  background: var(--bg); border-radius: 10px; padding: 12px 14px;
-  margin-bottom: 12px;
-}
-.race-goal-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 5px; }
-.race-goal-val { font-size: 15px; font-weight: 800; color: var(--purple); }
+.race-stat { text-align: center; background: var(--bg); border-radius: 8px; padding: 8px 4px; }
+.race-stat-val { font-size: 15px; font-weight: 800; color: var(--text); line-height: 1; }
+.race-stat-lbl { font-size: 9px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
 
 .race-countdown {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+  padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
 }
 .race-countdown.far    { background: rgba(61,37,88,0.08);  color: var(--purple); }
 .race-countdown.soon   { background: rgba(255,149,0,0.1);  color: #9c5a00; }
 .race-countdown.week   { background: rgba(232,97,74,0.12); color: var(--coral); }
 .race-countdown.past   { background: var(--bg); color: var(--muted2); }
+
+/* Completed races — list rows not cards */
+.completed-race-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  transition: var(--transition);
+}
+.completed-race-summary {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; cursor: pointer;
+}
+.completed-race-summary:hover { background: var(--bg); }
+.completed-race-dot {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.completed-race-info { flex: 1; min-width: 0; }
+.completed-race-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.completed-race-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.completed-race-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.completed-race-chevron { font-size: 12px; color: var(--muted2); transition: transform 0.2s; }
+.completed-race-chevron.open { transform: rotate(90deg); }
+.completed-race-detail {
+  display: none; padding: 0 18px 16px;
+  border-top: 1px solid var(--border);
+}
+.completed-race-detail.open { display: block; }
 
 .race-weather {
   display: flex; align-items: center; gap: 8px;
@@ -2199,16 +2235,15 @@ async function renderRaces() {
 
   const today = localDateStr(new Date());
   const sorted = [...racesData].sort((a,b) => (a.date||'').localeCompare(b.date||''));
-
-  const upcoming = sorted.filter(r => r.date >= today);
-  const completed = sorted.filter(r => r.date < today).reverse(); // newest done first
+  const upcoming  = sorted.filter(r => r.date >= today);
+  const completed = sorted.filter(r => r.date < today).reverse();
 
   const palettes = [
-    { bg:'linear-gradient(135deg,#3D2558,#5C3D82)' },
-    { bg:'linear-gradient(135deg,#E8614A,#f0a070)' },
-    { bg:'linear-gradient(135deg,#1a5c8a,#2d8fd4)' },
-    { bg:'linear-gradient(135deg,#1a7a34,#34C759)' },
-    { bg:'linear-gradient(135deg,#7a4a1a,#c87030)' },
+    { grad:'rgba(61,37,88,0.80),rgba(92,61,130,0.70)' },
+    { grad:'rgba(232,97,74,0.80),rgba(200,70,40,0.70)' },
+    { grad:'rgba(26,92,138,0.80),rgba(45,143,212,0.70)' },
+    { grad:'rgba(26,122,52,0.80),rgba(52,199,89,0.70)' },
+    { grad:'rgba(122,74,26,0.80),rgba(200,112,48,0.70)' },
   ];
 
   let html = '';
@@ -2218,47 +2253,35 @@ async function renderRaces() {
   }
   if (completed.length) {
     html += `<div class="section-label" style="margin-top:32px;margin-bottom:14px">✓ Completed — ${completed.length}</div>`;
-    html += '<div class="races-grid" id="completedGrid"></div>';
+    html += '<div id="completedList"></div>';
   }
   el.innerHTML = html;
 
-  // ── Render upcoming ──
   const upGrid = document.getElementById('upcomingGrid');
-  upcoming.forEach((race, i) => {
-    appendRaceCard(upGrid, race, i, palettes[i % palettes.length], false, today);
-  });
+  upcoming.forEach((race, i) => appendRaceCard(upGrid, race, i, palettes[i % palettes.length], today));
 
-  // ── Render completed ──
-  const doneGrid = document.getElementById('completedGrid');
-  completed.forEach((race, i) => {
-    appendRaceCard(doneGrid, race, i + upcoming.length, palettes[i % palettes.length], true, today);
-  });
+  const doneList = document.getElementById('completedList');
+  completed.forEach((race, i) => appendCompletedRow(doneList, race, i + upcoming.length, palettes[i % palettes.length]));
 }
 
-function appendRaceCard(parentEl, race, i, pal, isPast, todayStr) {
+function appendRaceCard(parentEl, race, i, pal, todayStr) {
   const daysAway = race.date ? Math.ceil((new Date(race.date) - new Date(todayStr)) / 86400000) : null;
-
-  let countdownCls = 'far';
-  let countdownTxt = daysAway !== null ? `${daysAway} days away` : '';
-  if (isPast)              { countdownCls = 'past'; countdownTxt = 'Completed'; }
-  else if (daysAway <= 7)  { countdownCls = 'week'; }
-  else if (daysAway <= 30) { countdownCls = 'soon'; }
-
-  const displayDate = race.date
-    ? new Date(race.date).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })
-    : '';
-
-  const cityForPhoto = (race.location || race.name || '').split(',')[0].trim();
-  const photoUrl = `https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&piprop=thumbnail&pithumbsize=600&titles=${encodeURIComponent(cityForPhoto)}`;
+  const countdownCls = daysAway <= 7 ? 'week' : daysAway <= 30 ? 'soon' : 'far';
+  const countdownTxt = daysAway !== null ? `${daysAway} days away` : '';
+  const displayDate  = race.date ? new Date(race.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
 
   const card = document.createElement('div');
   card.className = 'race-card';
   card.style.cursor = 'pointer';
   card.onclick = () => openRaceModal(race);
   card.innerHTML = `
-    <div class="race-card-header" id="race-hdr-${i}" style="background:${pal.bg};min-height:90px">
-      <div class="race-name">${race.name}</div>
-      <div class="race-date-loc">${displayDate}${race.location ? ' · ' + race.location : ''}</div>
+    <div class="race-card-header" id="race-hdr-${i}">
+      <div class="race-card-header-bg" id="race-bg-${i}"></div>
+      <div class="race-card-header-overlay" style="background:linear-gradient(135deg,${pal.grad})"></div>
+      <div class="race-card-header-text">
+        <div class="race-name">${race.name}</div>
+        <div class="race-date-loc">${displayDate}${race.location ? ' · ' + race.location : ''}</div>
+      </div>
     </div>
     <div class="race-card-body">
       <div class="race-stats-row">
@@ -2267,45 +2290,42 @@ function appendRaceCard(parentEl, race, i, pal, isPast, todayStr) {
           <div class="race-stat-lbl">Distance</div>
         </div>
         <div class="race-stat">
-          <div class="race-stat-val">${race.priority || '—'}</div>
+          <div class="race-stat-val" style="color:var(--purple)">${race.priority || '—'}</div>
           <div class="race-stat-lbl">Priority</div>
         </div>
         <div class="race-stat">
-          <div class="race-stat-val" style="font-size:13px">${daysAway !== null && !isPast ? daysAway : (isPast ? '✓' : '—')}</div>
-          <div class="race-stat-lbl">${isPast ? 'Done' : 'Days away'}</div>
+          <div class="race-stat-val" style="color:var(--coral)">${daysAway !== null ? daysAway : '—'}</div>
+          <div class="race-stat-lbl">Days away</div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
         <span class="race-countdown ${countdownCls}">${countdownTxt}</span>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          ${race.booked && race.booked.toLowerCase() === 'yes' ? `<span style="font-size:11px;font-weight:700;color:#1a7a34;background:rgba(52,199,89,0.1);padding:3px 9px;border-radius:20px">✓ Booked</span>` : race.booked && race.booked.toLowerCase() === 'no' ? `<span style="font-size:11px;font-weight:700;color:var(--coral);background:rgba(232,97,74,0.1);padding:3px 9px;border-radius:20px">Not booked</span>` : ''}
-          ${race.gpxId ? `<span style="font-size:11px;font-weight:700;color:var(--coral);background:rgba(232,97,74,0.08);padding:3px 9px;border-radius:20px">📍 Route</span>` : ''}
+        <div style="display:flex;gap:6px;align-items:center">
+          ${race.booked && race.booked.toLowerCase()==='yes' ? `<span style="font-size:10px;font-weight:700;color:#1a7a34;background:rgba(52,199,89,0.1);padding:2px 8px;border-radius:20px">✓ Booked</span>` : ''}
+          ${race.gpxId ? `<span style="font-size:10px;font-weight:700;color:var(--coral);background:rgba(232,97,74,0.08);padding:2px 8px;border-radius:20px">📍 Route</span>` : ''}
         </div>
       </div>
-      ${race.notes ? `<div style="margin-top:10px;font-size:12px;color:var(--muted);font-style:italic;line-height:1.4">${race.notes}</div>` : ''}
+      ${race.notes ? `<div style="font-size:11px;color:var(--muted);font-style:italic;line-height:1.4">${race.notes}</div>` : ''}
       <div id="weather-${i}" style="display:none"></div>
-      <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--muted2);font-weight:600">Tap for route & analysis →</div>
+      <div style="text-align:center;font-size:11px;color:var(--muted2);font-weight:600;padding-top:2px">Tap for route & analysis →</div>
     </div>`;
   parentEl.appendChild(card);
 
-  // Fetch location photo for header background
-  if (cityForPhoto) {
-    fetch(photoUrl).then(r => r.json()).then(d => {
-      const pages = d.query?.pages;
-      if (!pages) return;
-      const page = Object.values(pages)[0];
-      const thumb = page?.thumbnail?.source;
-      if (!thumb) return;
-      const hdr = document.getElementById(`race-hdr-${i}`);
-      if (!hdr) return;
-      hdr.style.background = `${pal.bg}, url("${thumb}") center/cover`;
-      hdr.style.backgroundBlendMode = 'multiply';
-      hdr.style.minHeight = '120px';
-    }).catch(() => {});
+  // Location photo — loads async, sits behind the gradient overlay
+  const city = (race.location || race.name || '').split(',')[0].trim();
+  if (city) {
+    fetch(`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&piprop=thumbnail&pithumbsize=800&titles=${encodeURIComponent(city)}`)
+      .then(r => r.json()).then(d => {
+        const page  = Object.values(d.query?.pages || {})[0];
+        const thumb = page?.thumbnail?.source;
+        if (!thumb) return;
+        const bg = document.getElementById(`race-bg-${i}`);
+        if (bg) bg.style.backgroundImage = `url("${thumb}")`;
+      }).catch(() => {});
   }
 
-  // Weather for upcoming races within 16 days
-  if (race.location && !isPast) {
+  // Weather
+  if (race.location) {
     fetchRaceWeather(race.location, race.date).then(wx => {
       const wxEl = document.getElementById(`weather-${i}`);
       if (!wxEl || !wx) return;
@@ -2316,15 +2336,55 @@ function appendRaceCard(parentEl, race, i, pal, isPast, todayStr) {
           <div>
             <div style="display:flex;align-items:baseline;gap:6px">
               <div class="race-weather-temp">${wx.tempMax}°C</div>
-              <div style="font-size:12px;color:var(--muted)">${wx.tempMin}°C low</div>
-              ${wx.rain > 20 ? `<div style="font-size:12px;color:#007AFF">💧 ${wx.rain}% rain</div>` : ''}
+              <div style="font-size:11px;color:var(--muted)">${wx.tempMin}°C low</div>
+              ${wx.rain > 20 ? `<div style="font-size:11px;color:#007AFF">💧 ${wx.rain}%</div>` : ''}
             </div>
-            <div class="race-weather-desc">${wx.desc} · Race day forecast</div>
+            <div class="race-weather-desc">${wx.desc}</div>
           </div>
         </div>`;
     });
   }
 }
+
+function appendCompletedRow(parentEl, race, i, pal) {
+  const displayDate = race.date
+    ? new Date(race.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+    : '';
+  const row = document.createElement('div');
+  row.className = 'completed-race-row';
+  const safeName = race.name.replace(/\/g,'\\').replace(/'/g,"\'");
+  row.innerHTML = `
+    <div class="completed-race-summary" onclick="toggleCompletedRace(${i})">
+      <div class="completed-race-dot" style="background:linear-gradient(135deg,${pal.grad})">🏅</div>
+      <div class="completed-race-info">
+        <div class="completed-race-name">${race.name}</div>
+        <div class="completed-race-meta">${displayDate}${race.distance ? ' · '+race.distance : ''}${race.location ? ' · '+race.location : ''}</div>
+      </div>
+      <div class="completed-race-right">
+        ${race.priority==='A' ? `<span style="font-size:10px;font-weight:700;color:var(--coral);background:rgba(232,97,74,0.1);padding:2px 7px;border-radius:10px">A Race</span>` : ''}
+        <span class="completed-race-chevron" id="chev-${i}">›</span>
+      </div>
+    </div>
+    <div class="completed-race-detail" id="detail-${i}">
+      <div style="padding-top:14px;display:flex;flex-direction:column;gap:10px">
+        ${race.notes ? `<div style="font-size:13px;color:var(--text2);font-style:italic;line-height:1.5">${race.notes}</div>` : ''}
+        <button onclick="openRaceModal(racesData.find(r=>r.name==='${safeName}'))"
+          style="align-self:flex-start;background:${race.gpxId ? 'var(--coral)' : 'var(--purple)'};color:white;border:none;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">
+          ${race.gpxId ? 'View Route & Details' : 'View Details'}
+        </button>
+      </div>
+    </div>`;
+  parentEl.appendChild(row);
+}
+
+function toggleCompletedRace(i) {
+  const detail = document.getElementById(`detail-${i}`);
+  const chev   = document.getElementById(`chev-${i}`);
+  if (!detail) return;
+  const open = detail.classList.toggle('open');
+  if (chev) chev.classList.toggle('open', open);
+}
+
 // ── RACE DETAIL MODAL ──
 let raceMapInstance = null;
 let elevChartInstance = null;
